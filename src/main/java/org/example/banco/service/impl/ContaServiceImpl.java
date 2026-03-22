@@ -13,7 +13,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-class ContaServiceImpl implements ContaService {
+public class ContaServiceImpl implements ContaService {
     private final ContaRepository contaRepository;
 
     @Transactional
