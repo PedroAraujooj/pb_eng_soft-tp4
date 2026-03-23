@@ -31,11 +31,8 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Dar permissão ao Maven Wrapper
-        run: chmod +x mvnw
-
       - name: Rodar build, testes, integração e cobertura
-        run: ./mvnw -B clean verify
+        run: mvn -B clean verify
 
       - name: Publicar relatórios de testes
         if: always()

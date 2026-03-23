@@ -31,11 +31,9 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Dar permissão ao Maven Wrapper
-        run: chmod +x mvnw
 
       - name: Rodar análise estática
-        run: ./mvnw -B checkstyle:checkstyle checkstyle:check
+        run: mvn -B checkstyle:checkstyle checkstyle:check
 
       - name: Publicar relatório do Checkstyle
         if: always()
