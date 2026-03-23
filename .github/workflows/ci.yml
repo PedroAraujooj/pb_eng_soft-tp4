@@ -22,49 +22,55 @@ jobs:
 
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Configurar JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
+          cache: maven
 
-      - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v5
+      - name: Dar permissão ao Maven Wrapper
+        run: chmod +x mvnw
 
-      - name: Dar permissão ao Gradle Wrapper
-        run: chmod +x gradlew
+      - name: Rodar build, testes, integração e cobertura
+        run: ./mvnw -B clean verify
 
-      - name: Rodar testes e validar cobertura
-        run: ./gradlew clean test jacocoTestReport jacocoTestCoverageVerification --no-daemon --stacktrace
-
-      - name: Publicar relatórios de testes e cobertura
+      - name: Publicar relatórios de testes
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-and-coverage-reports
+          name: test-reports
           path: |
-            build/reports/tests/test/**
-            build/test-results/test/**
-            build/reports/jacoco/test/**
+            target/surefire-reports/**
+            target/failsafe-reports/**
           if-no-files-found: warn
 
-      - name: Gerar JAR da aplicação
-        run: ./gradlew bootJar --no-daemon --stacktrace
+      - name: Publicar relatório de cobertura JaCoCo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: |
+            target/site/jacoco/**
+            target/jacoco.exec
+          if-no-files-found: warn
 
       - name: Publicar artefato da aplicação
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: application-jar
-          path: build/libs/*.jar
-          if-no-files-found: error
+          path: target/*.jar
+          if-no-files-found: warn
 
       - name: Resumo do job
         if: always()
         run: |
           echo "## Resultado da CI" >> $GITHUB_STEP_SUMMARY
-          echo "- Build Spring Boot com Gradle executado" >> $GITHUB_STEP_SUMMARY
-          echo "- Testes automatizados executados" >> $GITHUB_STEP_SUMMARY
-          echo "- Cobertura validada pelo JaCoCo" >> $GITHUB_STEP_SUMMARY
-          echo "- Relatórios anexados como artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Build Maven executado" >> $GITHUB_STEP_SUMMARY
+          echo "- Testes unitários executados" >> $GITHUB_STEP_SUMMARY
+          echo "- Testes de integração executados (se houver)" >> $GITHUB_STEP_SUMMARY
+          echo "- Cobertura JaCoCo validada" >> $GITHUB_STEP_SUMMARY
+          echo "- Relatórios publicados como artifacts" >> $GITHUB_STEP_SUMMARY

@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   static-analysis:
     name: Checkstyle
@@ -18,29 +22,27 @@ jobs:
 
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Configurar JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
+          cache: maven
 
-      - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v5
-
-      - name: Dar permissão ao Gradle Wrapper
-        run: chmod +x gradlew
+      - name: Dar permissão ao Maven Wrapper
+        run: chmod +x mvnw
 
       - name: Rodar análise estática
-        run: ./gradlew checkstyleMain checkstyleTest --no-daemon --stacktrace
+        run: ./mvnw -B checkstyle:checkstyle checkstyle:check
 
       - name: Publicar relatório do Checkstyle
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: checkstyle-report
-          path: build/reports/checkstyle/**
+          path: target/site/checkstyle.html
           if-no-files-found: warn
 
       - name: Resumo do job
@@ -48,4 +50,4 @@ jobs:
         run: |
           echo "## Resultado da análise estática" >> $GITHUB_STEP_SUMMARY
           echo "- Checkstyle executado" >> $GITHUB_STEP_SUMMARY
-          echo "- Relatório HTML/XML anexado como artifact" >> $GITHUB_STEP_SUMMARY
+          echo "- Relatório publicado como artifact" >> $GITHUB_STEP_SUMMARY
